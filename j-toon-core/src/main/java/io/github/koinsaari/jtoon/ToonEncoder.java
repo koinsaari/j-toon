@@ -10,7 +10,20 @@ import java.util.List;
 
 /**
  * Encodes Java objects to TOON format.
- * Handles primitives, objects, arrays, and tabular format detection.
+ * <p>
+ * Encoding strategy:
+ * - Recursively traverses object graph via Jackson JsonNode representation
+ * - Detects and optimizes array types: tabular (uniform objects), primitive (scalars), list (mixed)
+ * - Applies smart quoting: only quotes when necessary (special chars, reserved keywords, etc.)
+ * - Respects configuration: custom delimiters, indentation, length markers
+ * - Handles type normalization: BigDecimal, Date, BigInt, NaN/Infinity conversions
+ * <p>
+ * Format generation:
+ * - Primitives: "value" or "key: value"
+ * - Objects: nested with indentation
+ * - Tabular arrays: "items[2]{id,name}:\n  1,Ada\n  2,Bob"
+ * - Primitive arrays: "tags[3]: a,b,c"
+ * - List arrays: "items[2]:\n  - item1\n  - item2"
  */
 class ToonEncoder {
 
@@ -19,11 +32,12 @@ class ToonEncoder {
     }
 
     /**
-     * Encodes a Java object to TOON format.
+     * Encodes a Java object to TOON format string.
+     * Normalizes object to Jackson JsonNode, then recursively encodes to TOON.
      *
-     * @param value   object to encode
-     * @param options encoding options
-     * @return TOON-formatted string
+     * @param value object to encode (Map, List, or any JSON-serializable type)
+     * @param options encoding configuration (indent, delimiter, length markers)
+     * @return TOON-formatted string with no trailing whitespace
      */
     static String encode(Object value, ToonOptions options) {
         JsonNode normalized = JsonNormalizer.normalize(value);
@@ -32,6 +46,16 @@ class ToonEncoder {
         return writer.getOutput();
     }
 
+    /**
+     * Recursively encodes a JsonNode value based on its type.
+     * Dispatches to appropriate handler: null, boolean, number, string, array, or object.
+     *
+     * @param node value to encode
+     * @param writer output builder with indentation tracking
+     * @param depth current nesting level
+     * @param options encoding configuration
+     * @param key optional key name (null for root/array items)
+     */
     private static void encodeValue(JsonNode node, LineWriter writer, int depth, ToonOptions options, String key) {
         if (node.isNull()) {
             encodeNull(writer, depth, key);
@@ -83,6 +107,14 @@ class ToonEncoder {
         writer.writeLine(depth, value);
     }
 
+    /**
+     * Formats number to TOON-safe string representation.
+     * Handles integer, decimal, and special values (0, -0).
+     * Avoids scientific notation by using stripTrailingZeros().toPlainString().
+     *
+     * @param node numeric JsonNode
+     * @return string representation suitable for TOON
+     */
     private static String formatNumber(JsonNode node) {
         if (node.isIntegralNumber()) {
             return String.valueOf(node.longValue());
@@ -94,6 +126,16 @@ class ToonEncoder {
         return decimal.stripTrailingZeros().toPlainString();
     }
 
+    /**
+     * Encodes an object as nested key-value pairs.
+     * Empty objects output just "key:" with no fields.
+     *
+     * @param obj object to encode
+     * @param writer output builder
+     * @param depth current nesting level (incremented for nested fields)
+     * @param options encoding configuration
+     * @param key object's key name (null for root/array objects)
+     */
     private static void encodeObject(ObjectNode obj, LineWriter writer, int depth, ToonOptions options, String key) {
         if (obj.isEmpty()) {
             if (key != null) {
@@ -115,6 +157,21 @@ class ToonEncoder {
         }
     }
 
+    /**
+     * Encodes an array with intelligent type detection and optimization.
+     * Routes to: tabular (uniform objects), primitive (all scalars), or list (mixed/complex).
+     * <p>
+     * Detection logic:
+     * - Tabular: all elements are objects with identical primitive-valued fields
+     * - Primitive: all elements are scalar values (bool, number, string, null)
+     * - List: everything else (mixed types, nested structures, non-uniform objects)
+     *
+     * @param array array to encode
+     * @param writer output builder
+     * @param depth current nesting level
+     * @param options encoding configuration
+     * @param key array's key name (null for root arrays)
+     */
     private static void encodeArray(ArrayNode array, LineWriter writer, int depth, ToonOptions options, String key) {
         List<String> tabularKeys = detectTabularFormat(array);
         if (tabularKeys != null) {
@@ -171,6 +228,18 @@ class ToonEncoder {
         }
     }
 
+    /**
+     * Encodes tabular array: uniform objects with identical fields and primitive values.
+     * Most token-efficient format for structured data arrays.
+     * Example: users[2]{id,name,role}:\n  1,Alice,admin\n  2,Bob,user
+     *
+     * @param array array of objects
+     * @param keys field names in consistent order
+     * @param writer output builder
+     * @param depth current nesting level
+     * @param options encoding configuration
+     * @param key array's key name
+     */
     private static void encodeTabularArray(ArrayNode array, List<String> keys, LineWriter writer, int depth, ToonOptions options, String key) {
         int size = array.size();
         String lengthMarker = options.lengthMarker() ? "#" : "";
@@ -268,6 +337,20 @@ class ToonEncoder {
         return true;
     }
 
+    /**
+     * Detects if array qualifies for tabular format.
+     * Requirements:
+     * 1. Non-empty array
+     * 2. All elements are objects
+     * 3. All objects have identical key sets (same order and names)
+     * 4. All values in each object are primitives (not nested objects/arrays)
+     * <p>
+     * Critical: Uses objKeys.equals(keys) to enforce key order consistency.
+     * LinkedHashMap preserves insertion order, enabling this check.
+     *
+     * @param array array to check
+     * @return List of field names if tabular, null otherwise
+     */
     private static List<String> detectTabularFormat(ArrayNode array) {
         if (array.isEmpty()) return null;
 
