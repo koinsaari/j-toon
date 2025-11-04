@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
  * - List arrays: "items[2]:\n  - item1\n  - item2"
  * - Nested objects: "user:\n  id: 123\n  name: Ada"
  */
+@SuppressWarnings("unchecked")
 class ToonDecoder {
 
     /**
@@ -154,6 +155,7 @@ class ToonDecoder {
          * @param depth  current indentation depth
          * @return parsed List of array elements
          */
+        @SuppressWarnings("unchecked")
         private Object parseArray(String header, int depth) {
             Matcher tabularMatcher = TABULAR_HEADER_PATTERN.matcher(header);
             Matcher arrayMatcher = ARRAY_HEADER_PATTERN.matcher(header);
@@ -297,6 +299,7 @@ class ToonDecoder {
             return item;
         }
 
+        @SuppressWarnings("unchecked")
         private void parseListItemFields(Map<String, Object> item, int depth) {
             while (currentLine < lines.length) {
                 String line = lines[currentLine];
@@ -398,6 +401,7 @@ class ToonDecoder {
          * @param obj   map to populate with additional fields
          * @param depth current depth (should be 0 for root level)
          */
+        @SuppressWarnings("unchecked")
         private void parseRootObjectFields(Map<String, Object> obj, int depth) {
             while (currentLine < lines.length) {
                 String line = lines[currentLine];
@@ -430,6 +434,7 @@ class ToonDecoder {
             }
         }
 
+        @SuppressWarnings("unchecked")
         private Object parseNestedObject(int parentDepth) {
             Map<String, Object> obj = new LinkedHashMap<>();
 

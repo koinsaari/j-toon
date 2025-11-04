@@ -11,6 +11,7 @@ import static io.github.koinsaari.jtoon.ToonOptions.Delimiter;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+@SuppressWarnings("unchecked")
 class ToonDecoderTest {
 
     private static Object decode(String toon) {
