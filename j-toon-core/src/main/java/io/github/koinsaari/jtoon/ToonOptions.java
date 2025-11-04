@@ -9,10 +9,6 @@ public record ToonOptions(
 
     public static final ToonOptions DEFAULT = new ToonOptions(2, Delimiter.COMMA, false, true);
 
-    public ToonOptions() {
-        this(2, Delimiter.COMMA, false, true);
-    }
-
     public enum Delimiter {
         COMMA(","),
         TAB("\t"),

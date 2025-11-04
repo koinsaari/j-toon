@@ -6,7 +6,6 @@ import tools.jackson.databind.node.ObjectNode;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -292,7 +291,7 @@ class ToonEncoder {
                 objKeys.add(entry.getKey());
             }
 
-            if (objKeys.size() != keys.size() || !new HashSet<>(objKeys).containsAll(keys)) {
+            if (!objKeys.equals(keys)) {
                 return null;
             }
 
