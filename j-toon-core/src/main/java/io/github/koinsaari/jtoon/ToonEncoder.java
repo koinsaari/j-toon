@@ -111,6 +111,7 @@ class ToonEncoder {
      * Formats number to TOON-safe string representation.
      * Handles integer, decimal, and special values (0, -0).
      * Avoids scientific notation by using stripTrailingZeros().toPlainString().
+     * Non-finite numbers (NaN, ±Infinity) are converted to null.
      *
      * @param node numeric JsonNode
      * @return string representation suitable for TOON
@@ -119,6 +120,12 @@ class ToonEncoder {
         if (node.isIntegralNumber()) {
             return String.valueOf(node.longValue());
         }
+
+        double value = node.doubleValue();
+        if (!Double.isFinite(value)) {
+            return "null";
+        }
+
         BigDecimal decimal = node.decimalValue();
         if (decimal.compareTo(BigDecimal.ZERO) == 0) {
             return "0";

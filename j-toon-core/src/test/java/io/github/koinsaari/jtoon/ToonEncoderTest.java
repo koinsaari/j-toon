@@ -61,6 +61,17 @@ class ToonEncoderTest {
         }
 
         @Test
+        @DisplayName("normalizes NaN and Infinity to null")
+        void normalizesNonFiniteNumbers() {
+            assertEquals("null", encode(Double.NaN));
+            assertEquals("null", encode(Double.POSITIVE_INFINITY));
+            assertEquals("null", encode(Double.NEGATIVE_INFINITY));
+            assertEquals("null", encode(Float.NaN));
+            assertEquals("null", encode(Float.POSITIVE_INFINITY));
+            assertEquals("null", encode(Float.NEGATIVE_INFINITY));
+        }
+
+        @Test
         @DisplayName("encodes safe strings without quotes")
         void encodesSafeStrings() {
             assertEquals("hello", encode("hello"));

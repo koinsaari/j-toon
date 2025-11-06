@@ -7,6 +7,7 @@ TOON uses indentation-based structure and tabular formatting to represent data m
 ## Quick Example
 
 **JSON (verbose):**
+
 ```json
 {
   "users": [
@@ -17,6 +18,7 @@ TOON uses indentation-based structure and tabular formatting to represent data m
 ```
 
 **TOON (compact):**
+
 ```
 users[2]{id,name,role}:
   1,Alice,admin
@@ -32,6 +34,7 @@ users[2]{id,name,role}:
 ### For Library Use
 
 Add to your `build.gradle.kts`:
+
 ```gradle
 dependencies {
     implementation("io.github.koinsaari:j-toon-core:0.1.0")
@@ -39,6 +42,7 @@ dependencies {
 ```
 
 Or Maven `pom.xml`:
+
 ```xml
 <dependency>
     <groupId>io.github.koinsaari</groupId>
@@ -50,6 +54,7 @@ Or Maven `pom.xml`:
 ### For CLI Tool
 
 Download the fat JAR:
+
 ```bash
 # From releases page
 java -jar j-toon-cli-0.1.0.jar data.json -o output.toon
@@ -62,6 +67,7 @@ java -jar j-toon-cli-0.1.0.jar data.json -o output.toon
 ### As a Library
 
 **Encode Java objects to TOON:**
+
 ```java
 import io.github.koinsaari.jtoon.Toon;
 
@@ -79,6 +85,7 @@ System.out.println(toon);
 ```
 
 **Decode TOON back to objects:**
+
 ```java
 String toon = """
     users[2]{id,name}:
@@ -91,6 +98,7 @@ Object result = Toon.decode(toon);
 ```
 
 **With custom options:**
+
 ```java
 ToonOptions options = new ToonOptions(
     2,                              // indent size
@@ -106,21 +114,25 @@ Object decoded = Toon.decode(toon, options);
 ### Command Line
 
 **Encode JSON to TOON:**
+
 ```bash
 java -jar j-toon-cli-0.1.0.jar data.json -o output.toon
 ```
 
 **Decode TOON to JSON:**
+
 ```bash
 java -jar j-toon-cli-0.1.0.jar data.toon -o output.json
 ```
 
 **Using stdin/stdout:**
+
 ```bash
 cat data.json | java -jar j-toon-cli-0.1.0.jar > output.toon
 ```
 
 **With options:**
+
 ```bash
 # Use pipe delimiter
 java -jar j-toon-cli-0.1.0.jar data.json --delimiter "|"
@@ -139,6 +151,7 @@ java -jar j-toon-cli-0.1.0.jar data.toon --no-strict
 ```
 
 **Help:**
+
 ```bash
 java -jar j-toon-cli-0.1.0.jar --help
 ```
@@ -148,6 +161,7 @@ java -jar j-toon-cli-0.1.0.jar --help
 ## Format Overview
 
 ### Primitives
+
 ```
 name: Ada
 age: 30
@@ -157,6 +171,7 @@ empty: null
 ```
 
 ### Arrays
+
 ```
 # Primitive array (inline)
 tags[3]: reading,gaming,coding
@@ -179,6 +194,7 @@ users[2]:
 ```
 
 ### Tabular Arrays (Optimized for Uniform Data)
+
 ```
 # Most efficient for consistent object arrays
 users[2]{id,name,role}:
@@ -187,6 +203,7 @@ users[2]{id,name,role}:
 ```
 
 ### Nested Objects
+
 ```
 user:
   id: 123
@@ -210,23 +227,56 @@ user:
 
 ---
 
+## Type Normalization
+
+j-toon normalizes Java-specific types to the JSON data model before encoding:
+
+### Numeric Types
+
+- **NaN, Infinity, -Infinity** → `null`
+- **-0** → `0`
+- **BigInteger** → number (if within Long range), else quoted decimal string
+- **BigDecimal** → canonical decimal form (no exponent, no trailing zeros)
+
+### Temporal Types
+
+- **Date, Instant, LocalDateTime** → ISO 8601 string via Jackson serialization
+
+### Collection Types
+
+- **Set** → array (iteration order)
+- **Map** → object (string keys required)
+
+### Non-Serializable Types
+
+- **null, undefined** → `null`
+- **Functions, lambdas** → `null` (or excluded from output)
+
+All normalization is handled automatically via Jackson's `ObjectMapper`. Custom types implementing Jackson serialization will be normalized accordingly.
+
+---
+
 ## Building from Source
 
 ### Requirements
+
 - Java 17+
 - Gradle 8.0+
 
 ### Build
+
 ```bash
 ./gradlew build
 ```
 
 ### Run Tests
+
 ```bash
 ./gradlew test
 ```
 
 ### Build CLI JAR
+
 ```bash
 ./gradlew j-toon-cli:jar
 # Output: j-toon-cli/build/libs/j-toon-cli-0.1.0.jar
@@ -244,12 +294,14 @@ TOON optimizes for LLM input by:
 4. **Including Metadata** - Array lengths `[2]` and field names `{id,name}` for validation
 
 ### When to Use TOON
+
 - ✅ Passing data to LLMs as context
 - ✅ Large arrays of uniform objects
 - ✅ Cost-sensitive token counting
 - ✅ Human-readable serialization
 
 ### When to Stick with JSON
+
 - ✅ APIs and storage
 - ✅ Non-uniform nested data
 - ✅ Deep nesting
@@ -260,21 +312,24 @@ TOON optimizes for LLM input by:
 ## Examples
 
 ### LLM Prompt Usage
-```java
+
+````java
 Map<String, Object> userData = /* ... get user data ... */;
 String toon = Toon.encode(userData);
 
 String prompt = "Analyze these users:\n\n```toon\n" + toon + "\n```\n\nFind patterns...";
 // Send prompt to LLM with fewer tokens
-```
+````
 
 ### Data Pipeline
+
 ```bash
 # Convert entire dataset to TOON for efficient LLM processing
 cat large-dataset.json | java -jar j-toon-cli-0.1.0.jar --stats | head -1000 > llm-input.toon
 ```
 
 ### Custom Formatting
+
 ```java
 ToonOptions tabDelimited = new ToonOptions(
     2,

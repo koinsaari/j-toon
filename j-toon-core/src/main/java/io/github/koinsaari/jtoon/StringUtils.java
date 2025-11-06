@@ -42,10 +42,11 @@ class StringUtils {
         if (str.contains("\\")) return true;
         if (str.contains("\n") || str.contains("\r") || str.contains("\t")) return true;
         if (str.contains(delimiter)) return true;
+        if (str.contains("[") || str.contains("]") || str.contains("{") || str.contains("}")) return true;
         if (LOOKS_LIKE_BOOLEAN.matcher(str).matches()) return true;
         if (LOOKS_LIKE_NUMBER.matcher(str).matches()) return true;
         if (STRUCTURAL_TOKEN.matcher(str).matches()) return true;
-        return str.startsWith("- ");
+        return str.equals("-") || str.startsWith("-");
     }
 
     /**
