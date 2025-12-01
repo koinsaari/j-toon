@@ -11,7 +11,7 @@ application {
 
 dependencies {
     implementation(project(":j-toon-core"))
-    implementation("tools.jackson.core:jackson-databind:3.0.1")
+    implementation("tools.jackson.core:jackson-databind:3.0.3")
 }
 
 tasks.jar {
