@@ -1,5 +1,10 @@
 # j-toon
 
+> [!WARNING]
+> **Deprecated.** This project is no longer maintained. Use the official Java implementation instead: [toon-format/toon-java](https://github.com/toon-format/toon-java).
+>
+> The `io.github.koinsaari:j-toon-*` artifacts on Maven Central will receive no further releases.
+
 Java implementation of **Token-Oriented Object Notation** (TOON) - a compact, human-readable serialization format optimized for LLM input with significantly reduced token usage.
 
 TOON uses indentation-based structure and tabular formatting to represent data more efficiently than JSON while maintaining readability.
